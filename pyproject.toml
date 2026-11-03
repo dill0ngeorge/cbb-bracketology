@@ -1,0 +1,26 @@
+[project]
+name = "cbb-bracketology"
+version = "0.1.0"
+description = "Bayesian team ratings and a projected-Selection-Sunday bracket for men's college basketball"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "scipy",
+    "scikit-learn",
+]
+
+[project.optional-dependencies]
+bayes = ["pymc", "nutpie", "arviz"]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
