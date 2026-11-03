@@ -1,4 +1,4 @@
-"""Download raw season files (schedules + team box scores) from sportsdataverse."""
+"""Download raw season files (schedules, team and player box scores) from sportsdataverse."""
 from __future__ import annotations
 
 import argparse
@@ -6,7 +6,8 @@ import time
 import urllib.request
 from pathlib import Path
 
-from cbb.config import CURRENT_SEASON, RAW_DIR, SCHEDULE_URL, SEASONS, TEAM_BOX_URL
+from cbb.config import (CURRENT_SEASON, PLAYER_BOX_URL, RAW_DIR, SCHEDULE_URL, SEASONS,
+                        TEAM_BOX_URL)
 
 
 def _fetch(url: str, dest: Path, retries: int = 3) -> None:
@@ -27,7 +28,8 @@ def download_season(season: int, force: bool = False) -> None:
     """Fetch one season. Past seasons are cached; the current season is always refreshed."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     refresh = force or season == CURRENT_SEASON
-    for kind, template in (("schedule", SCHEDULE_URL), ("team_box", TEAM_BOX_URL)):
+    for kind, template in (("schedule", SCHEDULE_URL), ("team_box", TEAM_BOX_URL),
+                           ("player_box", PLAYER_BOX_URL)):
         dest = RAW_DIR / f"{kind}_{season}.parquet"
         if dest.exists() and not refresh:
             continue

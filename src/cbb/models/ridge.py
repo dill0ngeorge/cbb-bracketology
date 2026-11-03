@@ -62,8 +62,13 @@ def _design(tg: pd.DataFrame, team_index: dict[int, int]):
 
 
 def fit_ridge(tg: pd.DataFrame, alpha: float = 1.0, weights=None,
-              hca: float = HOME_COURT_PER100) -> RidgeRatings:
-    """Fit on a team_games slice (one season, or one season up to a date)."""
+              hca: float = HOME_COURT_PER100, prior: pd.DataFrame | None = None) -> RidgeRatings:
+    """Fit on a team_games slice (one season, or one season up to a date).
+
+    prior: optional DataFrame (team_id, prior_o_rel, prior_d_rel). Ratings are then
+    shrunk toward the prior instead of toward league average (a MAP estimate with
+    a normal prior centered on the preseason projection).
+    """
     d = tg[tg["has_box"]].copy()
     teams = np.unique(np.concatenate([d["team_id"].values, d["opp_id"].values]))
     idx = {t: i for i, t in enumerate(teams)}
@@ -71,8 +76,14 @@ def fit_ridge(tg: pd.DataFrame, alpha: float = 1.0, weights=None,
     X_off, X_tempo = _design(d, idx)
 
     y = d["off_eff"].values - hca * d["loc"].values  # remove known home-court effect
+    po = np.zeros(k); pd_ = np.zeros(k)
+    if prior is not None:
+        pr = prior.set_index("team_id")
+        po = pd.Series(teams).map(pr["prior_o_rel"]).fillna(0).values
+        pd_ = pd.Series(teams).map(pr["prior_d_rel"]).fillna(0).values
+        y = y - po[d["team_id"].map(idx).values] - pd_[d["opp_id"].map(idx).values]
     m_off = Ridge(alpha=alpha).fit(X_off, y, sample_weight=weights)
-    o, dd = m_off.coef_[:k], m_off.coef_[k:2 * k]
+    o, dd = po + m_off.coef_[:k], pd_ + m_off.coef_[k:2 * k]
     mu = m_off.intercept_
 
     # Each game appears twice (once per team); fine for tempo since it is symmetric.

@@ -38,3 +38,14 @@ def test_ridge_recovers_ratings():
     m = fit_ridge(tg, hca=2.5)
     est = m.ratings.sort_values("team_id")["adj_em"].values
     assert np.corrcoef(est, true_em)[0, 1] > 0.95
+
+
+def test_prior_pulls_ratings():
+    """With a strong prior and little data, ratings stay near the prior."""
+    tg, _ = _synthetic_games(n_games=20)
+    teams = np.unique(tg["team_id"])
+    prior = pd.DataFrame({"team_id": teams, "prior_o_rel": 10.0, "prior_d_rel": 0.0})
+    prior.loc[0, "prior_o_rel"] = 20.0
+    m = fit_ridge(tg, alpha=1e6, hca=2.5, prior=prior)
+    r = m.ratings.set_index("team_id")
+    assert abs((r.loc[teams[0], "adj_o"] - r.loc[teams[1], "adj_o"]) - 10.0) < 0.5

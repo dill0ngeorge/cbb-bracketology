@@ -17,6 +17,10 @@ TEAM_BOX_URL = (
     "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/"
     "espn_mens_college_basketball_team_boxscores/team_box_{season}.parquet"
 )
+PLAYER_BOX_URL = (
+    "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/"
+    "espn_mens_college_basketball_player_boxscores/player_box_{season}.parquet"
+)
 SCHEDULE_URL = (
     "https://raw.githubusercontent.com/sportsdataverse/hoopR-mbb-data/main/"
     "mbb/schedules/parquet/mbb_schedule_{season}.parquet"
