@@ -1,4 +1,4 @@
-"""End-to-end daily run: download -> clean -> preseason prior -> ratings.
+"""End-to-end daily run: download -> clean -> preseason prior -> Bayesian ratings.
 
 Usage:  python scripts/run_pipeline.py [--skip-download]
 """
@@ -11,9 +11,9 @@ from cbb.data.clean import build_all
 from cbb.data.download import download_all
 from cbb.data.players import build_player_seasons
 from cbb.models.prior import build_features, fit_prior, season_final_ratings
-from cbb.models.ridge import fit_ridge, rank_table
+from cbb.models.kalman import KalmanRatings
+from cbb.models.ridge import rank_table
 
-PRIOR_ALPHA = 8.0  # backtest-optimal; matches sigma_game^2 / sigma_prior^2
 
 
 def main():
@@ -36,14 +36,21 @@ def main():
         feats[feats["season"] == CURRENT_SEASON])
 
     cur = tg[tg["season"] == CURRENT_SEASON]
-    print(f"Fitting ratings on {cur['game_id'].nunique()} {CURRENT_SEASON} games...")
-    model = fit_ridge(cur, alpha=PRIOR_ALPHA, prior=prior)
-    table = rank_table(model, out["teams"][out["teams"]["season"] == CURRENT_SEASON])
+    print(f"Running Bayesian filter over {cur['game_id'].nunique()} {CURRENT_SEASON} games...")
+    prev = final[final["season"] == CURRENT_SEASON - 1].set_index("team_id")
+    teams = out["teams"][out["teams"]["season"] == CURRENT_SEASON]
+    mu0 = tg[(tg["season"] == CURRENT_SEASON - 1) & tg["has_box"]]["off_eff"].mean()
+    model = (KalmanRatings(teams["team_id"].values)
+             .init(prior, mu0=mu0, prev_tempo=prev["adj_t"] - prev["adj_t"].mean(),
+                   mu_t0=prev["adj_t"].mean())
+             .run(cur))
+    table = rank_table(model, teams)
     table = table.merge(prior[["team_id", "prior_em"]], on="team_id", how="left")
-    path = PROCESSED_DIR / f"ridge_ratings_{CURRENT_SEASON}.csv"
+    path = PROCESSED_DIR / f"ratings_{CURRENT_SEASON}.csv"
     table.to_csv(path, index=False)
     print(f"  wrote {path}")
-    print(table.head(10).round(1).to_string(index=False))
+    cols = ["rank", "team_short", "conf", "adj_o", "adj_d", "adj_em", "em_sd", "prior_em"]
+    print(table[cols].head(15).round(1).to_string(index=False))
 
 
 if __name__ == "__main__":

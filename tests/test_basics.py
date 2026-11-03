@@ -49,3 +49,18 @@ def test_prior_pulls_ratings():
     m = fit_ridge(tg, alpha=1e6, hca=2.5, prior=prior)
     r = m.ratings.set_index("team_id")
     assert abs((r.loc[teams[0], "adj_o"] - r.loc[teams[1], "adj_o"]) - 10.0) < 0.5
+
+
+def test_kalman_learns_and_shrinks_uncertainty():
+    from cbb.models.kalman import KalmanRatings
+    tg, true_em = _synthetic_games(n_games=600)
+    tg["date"] = pd.Timestamp("2025-11-03") + pd.to_timedelta(tg["game_id"] // 15, unit="D")
+    teams = np.sort(tg["team_id"].unique())
+    prior = pd.DataFrame({"team_id": teams, "prior_o_rel": 0.0, "prior_d_rel": 0.0})
+    kf = KalmanRatings(teams, hca=2.5).init(prior, mu0=105.0)
+    sd0 = kf.ratings["em_sd"].mean()
+    kf.run(tg)
+    r = kf.ratings.sort_values("team_id")
+    assert np.corrcoef(r["adj_em"], true_em)[0, 1] > 0.9
+    # Drift keeps uncertainty from collapsing to zero, but data must still shrink it.
+    assert r["em_sd"].mean() < 0.7 * sd0

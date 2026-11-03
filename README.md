@@ -21,7 +21,7 @@ team strength**, not a prediction of the committee.
 - [x] Data pipeline (2014-15 → current season, D1 only)
 - [x] Ridge-regression baseline ratings + walk-forward evaluation
 - [x] Preseason prior from roster continuity + transfers (player-level data)
-- [ ] Bayesian rating model (PyMC)
+- [x] Bayesian dynamic rating model (PyMC for hyperparameters, Kalman filter for exact daily posterior)
 - [ ] Season + conference tournament simulator
 - [ ] Résumé / quadrant scoring
 - [ ] Bracket construction + bracketing rules
@@ -73,13 +73,47 @@ Walk-forward 2018–2026, refit weekly from Nov 15 (trained only on earlier seas
 | Feb | 11.12 | **11.02** | 0.567 | **0.563** |
 | Mar | 11.14 | **11.11** | 0.567 | **0.566** |
 
+## Bayesian dynamic model
+
+Each team's offense and defense follow a weekly random walk starting from the
+preseason prior; each team-game's efficiency is
+`mu + o[team] + d[opp] + HCA·loc + Normal(0, σ)`.
+
+- **PyMC (nutpie NUTS)** fits the full model on past seasons (~30 s/season) to
+  learn the hyperparameters. Posterior means are stable across seasons:
+
+  | Season | σ (game noise /100 poss) | τ (weekly drift) | k (prior scale) |
+  |---|---|---|---|
+  | 2023 | 12.58 | 0.68 | 0.76 |
+  | 2025 | 12.58 | 0.73 | 0.79 |
+  | 2026 | 12.79 | 0.62 | 0.88 |
+
+  τ ≈ 0.7/week means true team quality drifts ±3 points of efficiency margin
+  over a season; k < 1 means the roster prior is *more* reliable than its raw
+  error suggests once in-season drift is accounted for.
+- **Kalman filter** computes the exact filtering posterior of the same
+  linear-Gaussian model (a full season in ~2 s), including the full covariance
+  between teams, which the season simulator samples from.
+
+Walk-forward 2018–2026 (45.5k games):
+
+| Model | Margin RMSE | Accuracy | Log loss | Brier |
+|---|---|---|---|---|
+| Ridge, no prior | 11.73 | 70.8% | 0.571 | 0.191 |
+| Ridge + prior (α tuned) | 11.28 | 71.9% | 0.539 | 0.183 |
+| **Bayesian (Kalman)** | **11.28** | **71.9%** | **0.538** | **0.182** |
+
+The Bayesian model matches the tuned ridge on point accuracy with no tuning,
+and adds calibrated uncertainty: predicted vs. actual win rates agree within
+~1 point in every decile. That uncertainty is what the bracket simulation needs.
+
 Known gaps: freshmen/recruiting classes are invisible to the prior; one prior SD
 for every team (extreme projections may be overconfident).
 
 ## Usage
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,bayes]"
 python scripts/run_pipeline.py      # download, clean, baseline ratings
 pytest
 ```
@@ -94,7 +128,11 @@ src/cbb/
   data/players.py    player-season table (minutes, game score, transfers)
   models/ridge.py    adjusted-efficiency ratings, optionally shrunk to a prior
   models/prior.py    preseason prior model
+  models/bayes_pymc.py  full Bayesian model in PyMC (hyperparameter learning)
+  models/kalman.py   exact posterior via Kalman filter (daily ratings, simulation draws)
   evaluate.py        walk-forward evaluation, shared by every model
-scripts/run_pipeline.py
+scripts/run_pipeline.py     daily: download, clean, prior, Bayesian ratings
+scripts/fit_hyperparams.py  PyMC fits for sigma / tau / k
+scripts/backtest.py         walk-forward comparison of all models
 tests/
 ```
