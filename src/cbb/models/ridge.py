@@ -1,7 +1,8 @@
 """Baseline team ratings: opponent-adjusted efficiency via ridge regression.
 
 For every team-game with a box score:
-    off_eff[team vs opp] = mu + o[team] + d[opp] + hca * loc + noise
+    off_eff[team vs opp] = mu + o[team] + d[opp] + HCA * loc + noise
+(HCA is fixed at its historical value, see config.HOME_COURT_PER100)
     poss[game]           = mu_t + t[team] + t[opp] + noise
 
 AdjO = mu + o, AdjD = mu + d (points allowed per 100; lower is better),
@@ -18,6 +19,8 @@ import pandas as pd
 from scipy import sparse
 from scipy.stats import norm
 from sklearn.linear_model import Ridge
+
+from cbb.config import HOME_COURT_PER100
 
 
 @dataclass
@@ -52,14 +55,14 @@ def _design(tg: pd.DataFrame, team_index: dict[int, int]):
     X_off = sparse.hstack([
         sparse.csr_matrix((ones, (rows, ti)), shape=(n, k)),
         sparse.csr_matrix((ones, (rows, oi)), shape=(n, k)),
-        sparse.csr_matrix(tg["loc"].values.astype(float).reshape(-1, 1)),
     ]).tocsr()
     X_tempo = (sparse.csr_matrix((ones, (rows, ti)), shape=(n, k))
                + sparse.csr_matrix((ones, (rows, oi)), shape=(n, k))).tocsr()
     return X_off, X_tempo
 
 
-def fit_ridge(tg: pd.DataFrame, alpha: float = 1.0, weights=None) -> RidgeRatings:
+def fit_ridge(tg: pd.DataFrame, alpha: float = 1.0, weights=None,
+              hca: float = HOME_COURT_PER100) -> RidgeRatings:
     """Fit on a team_games slice (one season, or one season up to a date)."""
     d = tg[tg["has_box"]].copy()
     teams = np.unique(np.concatenate([d["team_id"].values, d["opp_id"].values]))
@@ -67,8 +70,9 @@ def fit_ridge(tg: pd.DataFrame, alpha: float = 1.0, weights=None) -> RidgeRating
     k = len(teams)
     X_off, X_tempo = _design(d, idx)
 
-    m_off = Ridge(alpha=alpha).fit(X_off, d["off_eff"].values, sample_weight=weights)
-    o, dd, hca = m_off.coef_[:k], m_off.coef_[k:2 * k], m_off.coef_[-1]
+    y = d["off_eff"].values - hca * d["loc"].values  # remove known home-court effect
+    m_off = Ridge(alpha=alpha).fit(X_off, y, sample_weight=weights)
+    o, dd = m_off.coef_[:k], m_off.coef_[k:2 * k]
     mu = m_off.intercept_
 
     # Each game appears twice (once per team); fine for tempo since it is symmetric.

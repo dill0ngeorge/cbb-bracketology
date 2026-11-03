@@ -40,9 +40,9 @@ Walk-forward (refit weekly from Dec 1, predict the next week), 2015–2026, 53k 
 
 | Model | Margin RMSE | Accuracy | Log loss | Brier |
 |---|---|---|---|---|
-| Ridge adjusted efficiency | 11.47 | 70.9% | 0.560 | 0.190 |
+| Ridge adjusted efficiency (fixed home court) | 11.36 | 71.0% | 0.557 | 0.188 |
 
-Error is highest in December (RMSE 12.4) when the model has little data, which is
+Error is highest in December (RMSE 12.1) when the model has little data, which is
 what the Bayesian model's preseason priors are meant to fix.
 
 ## Usage

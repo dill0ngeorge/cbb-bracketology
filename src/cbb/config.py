@@ -24,3 +24,9 @@ SCHEDULE_URL = (
 
 # Possession estimate: FGA - OREB + TO + FT_FACTOR * FTA
 FT_FACTOR = 0.475
+
+# Home-court advantage, points per 100 possessions *per side* (a home team gains
+# HCA on offense and the visitor loses HCA). ~3.2 points per game at 69 possessions.
+# Mean of full-season ridge fits 2022-2026 (2021 excluded: no fans). Held fixed
+# all season rather than re-estimated from early, home-heavy schedules.
+HOME_COURT_PER100 = 2.3

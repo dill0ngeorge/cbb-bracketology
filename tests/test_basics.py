@@ -35,7 +35,6 @@ def _synthetic_games(n_teams=30, n_games=900, seed=0):
 
 def test_ridge_recovers_ratings():
     tg, true_em = _synthetic_games()
-    m = fit_ridge(tg)
+    m = fit_ridge(tg, hca=2.5)
     est = m.ratings.sort_values("team_id")["adj_em"].values
     assert np.corrcoef(est, true_em)[0, 1] > 0.95
-    assert 1.5 < m.hca < 3.5
