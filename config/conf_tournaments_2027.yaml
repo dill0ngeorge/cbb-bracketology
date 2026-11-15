@@ -1,0 +1,61 @@
+# Conference tournament formats, 2026-27 season (2027 tournaments).
+#
+# entry: seeds entering each round, first round first. Seeds not listed do not
+#   qualify. In every round, the teams left are paired best seed vs worst seed
+#   (a re-seeding rule that matches most published brackets closely enough for
+#   auto-bid odds).
+# site: neutral | campus (higher seed hosts every round) | campus_rounds: N
+#   (higher seed hosts the first N rounds, neutral after).
+# confidence: verified = checked against a 2027 announcement;
+#   assumed_2026 = last season's format, not yet confirmed for 2027.
+#
+# Check and edit freely; the simulator validates that every round pairs evenly.
+
+# Teams still in the NCAA reclassification period: not eligible for an NCAA
+# automatic bid, and excluded from their conference tournament here.
+ncaa_ineligible: [Le Moyne, Mercyhurst, New Haven, West Georgia]
+
+conferences:
+  ACC:            {entry: [[10,11,12,13,14,15], [5,6,7,8,9], [1,2,3,4]], site: neutral, confidence: assumed_2026}
+  Big Ten:        {entry: [[10,11,12,13,14,15], [5,6,7,8,9], [1,2,3,4]], site: neutral, confidence: assumed_2026}
+  SEC:            {entry: [[9,10,11,12,13,14,15,16], [5,6,7,8], [1,2,3,4]], site: neutral, confidence: assumed_2026}
+  Big 12:         {entry: [[9,10,11,12,13,14,15,16], [5,6,7,8], [1,2,3,4]], site: neutral, confidence: assumed_2026}
+  Big East:       {entry: [[6,7,8,9,10,11], [1,2,3,4,5]], site: neutral, confidence: assumed_2026}
+  A-10:           {entry: [[11,12,13,14], [5,6,7,8,9,10], [1,2,3,4]], site: neutral, confidence: assumed_2026}
+  American:       {entry: [[7,8,9,10], [5,6], [3,4], [1,2]], site: neutral, confidence: verified,
+                   note: "Top 10 of 13, stepladder; moves to Tampa (USF home floor) in 2027 - treated as neutral"}
+  Pac-12:         {entry: [[8,9], [5,6,7], [3,4], [1,2]], site: neutral, confidence: verified,
+                   note: "All 9, MGM Grand Las Vegas, double byes for 1-2"}
+  Mountain West:  {entry: [[7,8,9,10], [1,2,3,4,5,6]], site: neutral, confidence: verified,
+                   note: "All 10, top 6 bye to quarterfinals, Thomas & Mack"}
+  WCC:            {entry: [[7,8,9,10], [5,6], [3,4], [1,2]], site: neutral, confidence: verified,
+                   note: "All 10, stepladder, Orleans Arena"}
+  Sun Belt:       {entry: [[11,12,13,14], [9,10], [7,8], [5,6], [3,4], [1,2]], site: neutral, confidence: verified,
+                   note: "All 14, seven-round stepladder, Pensacola"}
+  SWAC:           {entry: [[7,8,9,10], [5,6], [3,4], [1,2]], site: neutral, confidence: verified,
+                   note: "New for 2027: top 10, 1-2 to semis, 3-4 to quarters, 5-6 to second round"}
+  Atlantic Sun:   {entry: [[1,2,3,4,5,6,7,8]], site: neutral, confidence: verified,
+                   note: "All 8 at VyStar Veterans Memorial Arena, Jacksonville"}
+  UAC:            {entry: [[1,2,3,4,5,6,7,8]], site: neutral, confidence: assumed_2026,
+                   note: "Inaugural; Allen TX; reported 8 of 9 qualify (West Georgia ineligible anyway); bracket shape unannounced"}
+  OVC:            {entry: [[5,6,7,8], [3,4], [1,2]], site: neutral, confidence: assumed_2026,
+                   note: "Top 8, top two seeds to semifinals"}
+  CUSA:           {entry: [[7,8,9,10], [1,2,3,4,5,6]], site: neutral, confidence: assumed_2026}
+  MVC:            {entry: [[6,7,8,9,10,11], [1,2,3,4,5]], site: neutral, confidence: assumed_2026}
+  Metro:          {entry: [[7,8,9,10], [1,2,3,4,5,6]], site: neutral, confidence: assumed_2026, note: "MAAC; top 10 of 13"}
+  CAA:            {entry: [[12,13], [5,6,7,8,9,10,11], [1,2,3,4]], site: neutral, confidence: assumed_2026}
+  MAC:            {entry: [[1,2,3,4,5,6,7,8]], site: neutral, confidence: assumed_2026, note: "Top 8 of 12"}
+  Horizon:        {entry: [[5,6,7,8,9,10,11,12], [1,2,3,4]], site: {campus_rounds: 2}, confidence: assumed_2026,
+                   note: "Early rounds on campus, semis/final in Indianapolis"}
+  Big Sky:        {entry: [[6,7,8,9,10,11], [1,2,3,4,5]], site: neutral, confidence: assumed_2026}
+  Big West:       {entry: [[1,2,3,4,5,6,7,8]], site: neutral, confidence: assumed_2026, note: "Top 8 of 12"}
+  SoCon:          {entry: [[6,7,8,9,10,11], [1,2,3,4,5]], site: neutral, confidence: assumed_2026}
+  Southland:      {entry: [[5,6,7,8], [3,4], [1,2]], site: neutral, confidence: assumed_2026, note: "Top 8, stepladder"}
+  Summit:         {entry: [[1,2,3,4,5,6,7,8]], site: neutral, confidence: assumed_2026}
+  MEAC:           {entry: [[1,2,3,4,5,6,7,8]], site: neutral, confidence: assumed_2026}
+  Big South:      {entry: [[8,9], [1,2,3,4,5,6,7]], site: neutral, confidence: assumed_2026}
+  Patriot:        {entry: [[7,8,9,10], [1,2,3,4,5,6]], site: campus, confidence: assumed_2026}
+  Am. East:       {entry: [[1,2,3,4,5,6,7,8]], site: campus, confidence: assumed_2026, note: "Top 8 of 9"}
+  NEC:            {entry: [[3,4,5,6], [1,2]], site: campus, confidence: assumed_2026,
+                   note: "Eligible teams only (Le Moyne, Mercyhurst, New Haven reclassifying). 6 teams: 1-2 bye"}
+  Ivy:            {entry: [[1,2,3,4]], site: neutral, confidence: assumed_2026, note: "Top 4"}

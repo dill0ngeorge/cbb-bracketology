@@ -22,7 +22,7 @@ team strength**, not a prediction of the committee.
 - [x] Ridge-regression baseline ratings + walk-forward evaluation
 - [x] Preseason prior from roster continuity + transfers (player-level data)
 - [x] Bayesian dynamic rating model (PyMC for hyperparameters, Kalman filter for exact daily posterior)
-- [ ] Season + conference tournament simulator
+- [x] Season + conference tournament simulator (76-team field: 32 auto bids + 44 at-large)
 - [ ] Résumé / quadrant scoring
 - [ ] Bracket construction + bracketing rules
 - [ ] Public site
@@ -107,6 +107,32 @@ The Bayesian model matches the tuned ridge on point accuracy with no tuning,
 and adds calibrated uncertainty: predicted vs. actual win rates agree within
 ~1 point in every decile. That uncertainty is what the bracket simulation needs.
 
+## Season simulator
+
+Monte Carlo over the rest of the season (5,000 runs in ~10 s). Each run draws
+ratings from the Bayesian posterior (full covariance), lets them keep drifting
+weekly, plays every remaining game, builds conference standings (random
+tiebreaks), and plays each conference tournament in its **actual 2027 format**
+(`config/conf_tournaments_2027.yaml`, including stepladders and campus sites).
+Outputs P(conference 1 seed), P(auto bid), and, for now, P(in field) under the
+purely predictive view (α = 1); per-simulation game results are saved for the
+résumé-based selection.
+
+The 2027 NCAA tournament has **76 teams**: 32 automatic bids + 44 at-large; the
+12 lowest-seeded at-large teams and 12 lowest-seeded automatic qualifiers play
+in the Opening Round.
+
+Backtest from Jan 15, 2023–2026 (past seasons use generic tournament formats):
+
+| Quantity | Model | Naive baseline |
+|---|---|---|
+| Conference wins RMSE | 1.98 | 3.75 |
+| P(conference 1 seed) log loss | 0.181 | 0.294 |
+| P(auto bid) log loss | 0.215 | 0.300 |
+
+Probabilities are calibrated across deciles; strong favorites' auto-bid odds run
+slightly low in the backtest because generic formats ignore protective byes.
+
 Known gaps: freshmen/recruiting classes are invisible to the prior; one prior SD
 for every team (extreme projections may be overconfident).
 
@@ -130,9 +156,14 @@ src/cbb/
   models/prior.py    preseason prior model
   models/bayes_pymc.py  full Bayesian model in PyMC (hyperparameter learning)
   models/kalman.py   exact posterior via Kalman filter (daily ratings, simulation draws)
+  models/current.py  build the season model as of any date (pipeline, sim, backtests)
+  sim/formats.py     conference tournament formats (validated)
+  sim/season.py      season + conference tournament Monte Carlo
   evaluate.py        walk-forward evaluation, shared by every model
-scripts/run_pipeline.py     daily: download, clean, prior, Bayesian ratings
+config/conf_tournaments_2027.yaml   tournament formats (edit me)
+scripts/run_pipeline.py     daily: download, clean, prior, Bayesian ratings, simulation
 scripts/fit_hyperparams.py  PyMC fits for sigma / tau / k
 scripts/backtest.py         walk-forward comparison of all models
+scripts/backtest_sim.py     simulator backtest (standings, 1 seeds, auto bids)
 tests/
 ```

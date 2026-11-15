@@ -64,3 +64,34 @@ def test_kalman_learns_and_shrinks_uncertainty():
     assert np.corrcoef(r["adj_em"], true_em)[0, 1] > 0.9
     # Drift keeps uncertainty from collapsing to zero, but data must still shrink it.
     assert r["em_sd"].mean() < 0.7 * sd0
+
+
+def test_conference_formats_valid():
+    from cbb.sim.formats import default_format, load_formats
+    book = load_formats(2027)
+    assert len(book.formats) == 32
+    for n in range(2, 19):
+        default_format("X", n).validate()
+
+
+def test_simulator_conserves_bids():
+    """Every simulation has exactly one auto bid per conference and a full field."""
+    import datetime as dt
+    from cbb.models.kalman import KalmanRatings
+    from cbb.sim.formats import FormatBook
+    from cbb.sim.season import simulate
+    rng = np.random.default_rng(1)
+    ids = np.arange(1, 61)
+    teams = pd.DataFrame({"team_id": ids, "team_short": [f"T{i}" for i in ids],
+                          "conf": [f"C{i % 6}" for i in ids]})
+    prior = pd.DataFrame({"team_id": ids, "prior_o_rel": rng.normal(0, 5, 60), "prior_d_rel": 0.0})
+    model = KalmanRatings(ids).init(prior)
+    pairs = [(h, a) for h in ids for a in ids if h < a and h % 6 == a % 6]
+    rem = pd.DataFrame({"game_id": range(len(pairs)), "home_id": [p[0] for p in pairs],
+                        "away_id": [p[1] for p in pairs], "neutral": False, "conf_game": True,
+                        "date": dt.date(2027, 1, 10)})
+    played = pd.DataFrame(columns=["home_id", "away_id", "home_score", "away_score", "conf_game"])
+    out = simulate(model, teams, played, rem, FormatBook({}, set()), dt.date(2027, 1, 1),
+                   n_sims=200, n_at_large=10)
+    assert (out.arrays["auto"].sum(1) == 6).all()
+    assert np.isclose(out.summary["p_field_pred"].sum(), 16)
