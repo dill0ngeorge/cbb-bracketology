@@ -95,3 +95,18 @@ def test_simulator_conserves_bids():
                    n_sims=200, n_at_large=10)
     assert (out.arrays["auto"].sum(1) == 6).all()
     assert np.isclose(out.summary["p_field_pred"].sum(), 16)
+
+
+def test_76_team_seed_lines():
+    from collections import Counter
+    from cbb.sim.bracket import seed_lines
+    auto = np.array([False] * 12 + [True] + [False] * 20 + [True] * 3 + [False] * 12 + [True] * 28)
+    seed, game = seed_lines(auto)
+    assert len(seed) == 76 and game.max() + 1 == 12
+    slots = {(g if g >= 0 else 100 + i) for i, g in enumerate(game)}
+    assert len(slots) == 64
+    # 4 bracket slots per line, and no Opening Round game mixes at-large with auto bids
+    by_line = Counter(seed[game < 0])
+    for g in range(12):
+        assert len(set(auto[game == g])) == 1
+    assert seed[:4].tolist() == [1, 1, 1, 1] and seed.max() == 16

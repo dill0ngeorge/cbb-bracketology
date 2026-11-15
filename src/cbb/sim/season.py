@@ -83,7 +83,7 @@ def simulate(model, teams: pd.DataFrame, played: pd.DataFrame, remaining: pd.Dat
     conf_members = {cf: np.where((conf == cf) & ~ineligible)[0] for cf in pd.unique(conf)}
 
     keep = {k: [] for k in ["wins", "losses", "conf_wins", "conf_losses", "seed",
-                            "auto", "em_final", "rem_home_won"]}
+                            "auto", "em_final", "rem_home_margin"]}
     tourney_rows = []
 
     for start in range(0, n_sims, chunk):
@@ -94,14 +94,15 @@ def simulate(model, teams: pd.DataFrame, played: pd.DataFrame, remaining: pd.Dat
         path = x0[:, None, :] + np.cumsum(steps, axis=1)          # (S, W, 2K)
 
         # ---- remaining regular season
-        home_won = np.zeros((S, len(rem)), dtype=bool)
+        home_margin = np.zeros((S, len(rem)), dtype=np.float32)
         for w in np.unique(gweek):
             m = gweek == w
             R = path[:, w, :]
             h = np.broadcast_to(gh[m], (S, m.sum()))
             a = np.broadcast_to(ga[m], (S, m.sum()))
-            home_won[:, m] = _game_margin(R, tempo, mu_t, h, a, gloc[m], model.hca,
-                                          hyp["margin_noise"], rng, K) > 0
+            home_margin[:, m] = _game_margin(R, tempo, mu_t, h, a, gloc[m], model.hca,
+                                             hyp["margin_noise"], rng, K)
+        home_won = home_margin > 0
         win_t = np.where(home_won, gh, ga)
         lose_t = np.where(home_won, ga, gh)
         rows = np.arange(S)[:, None]
@@ -129,7 +130,7 @@ def simulate(model, teams: pd.DataFrame, played: pd.DataFrame, remaining: pd.Dat
         keep["conf_wins"].append(cw.astype(np.int16)); keep["conf_losses"].append(cl.astype(np.int16))
         keep["seed"].append(seed_arr); keep["auto"].append(auto)
         keep["em_final"].append((R_end[:, :K] - R_end[:, K:]).astype(np.float32))
-        keep["rem_home_won"].append(home_won)
+        keep["rem_home_margin"].append(home_margin.astype(np.float16))
 
     arr = {k: np.concatenate(v) for k, v in keep.items()}
     arr["tourney_games"] = (np.concatenate(tourney_rows) if tourney_rows
@@ -183,11 +184,15 @@ def _play_tournament(fmt, order, R, tempo, mu_t, hca, noise, rng, K, sim_offset,
         th = order[rows, hi - 1]
         tl = order[rows, lo - 1]
         loc = 1.0 if rnd < fmt.campus_rounds else 0.0
-        hi_won = _game_margin(R, tempo, mu_t, th, tl, loc, hca, noise, rng, K) > 0
+        margin = _game_margin(R, tempo, mu_t, th, tl, loc, hca, noise, rng, K)
+        hi_won = margin > 0
         alive = np.where(hi_won, hi, lo)
+        # columns: sim, higher-seed team, lower-seed team, loc (higher seed's view), margin (same)
         log.append(np.stack([
             np.broadcast_to(np.arange(S)[:, None] + sim_offset, th.shape).ravel(),
-            th.ravel(), tl.ravel(), np.full(th.size, int(loc)), hi_won.ravel()], 1).astype(np.int32))
+            th.ravel(), tl.ravel(), np.full(th.size, int(loc)),
+            np.round(margin).astype(np.int32).ravel() + (hi_won.ravel() & (np.round(margin).ravel() == 0)).astype(np.int32)
+            - ((~hi_won.ravel()) & (np.round(margin).ravel() == 0)).astype(np.int32)], 1).astype(np.int32))
         rnd += 1
         if alive.shape[1] == 1 and rnd >= len(rounds):
             break

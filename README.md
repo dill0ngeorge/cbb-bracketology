@@ -23,8 +23,9 @@ team strength**, not a prediction of the committee.
 - [x] Preseason prior from roster continuity + transfers (player-level data)
 - [x] Bayesian dynamic rating model (PyMC for hyperparameters, Kalman filter for exact daily posterior)
 - [x] Season + conference tournament simulator (76-team field: 32 auto bids + 44 at-large)
-- [ ] Résumé / quadrant scoring
-- [ ] Bracket construction + bracketing rules
+- [x] Résumé score (quadrants on own ratings, wins above bubble, capped margin)
+- [x] Field selection, α blend, 76-team S-curve + Opening Round, projected bracket
+- [ ] Bracketing rules (conference separation, geography)
 - [ ] Public site
 
 ## Data
@@ -133,6 +134,26 @@ Backtest from Jan 15, 2023–2026 (past seasons use generic tournament formats):
 Probabilities are calibrated across deciles; strong favorites' auto-bid odds run
 slightly low in the backtest because generic formats ignore protective byes.
 
+## Résumé, selection and the bracket
+
+Inside every simulation, at Selection Sunday:
+
+- **Résumé score**: for each game, credit = won − P(bubble team wins it) + 0.25 × capped
+  margin vs. the bubble team's expected margin. Opponent strength comes from our own
+  end-of-season ratings in that simulation; quadrant W-L records (NCAA location cutoffs on
+  our rankings) are reported alongside. Quadrants are a step-function version of the same
+  question, so the score uses the continuous version.
+- **Seeding score** = α · z(team strength) + (1 − α) · z(résumé), default α = 0.5.
+- **Selection**: 32 conference champions + the 44 best-scoring non-champions.
+- **76-team seeding**: the 12 lowest at-large and 12 lowest automatic qualifiers on the
+  S-curve are paired into Opening Round games; 52 direct teams + 12 game slots fill the
+  64-team bracket four per seed line.
+
+Outputs (`outputs/`): `index.html` (bracket, bubble, top 40), `bracket.csv`, `top40.csv`,
+`all_teams.csv`. The displayed bracket gives each auto bid to the conference's most likely
+champion and orders the field by mean seeding score. Regions snake the S-curve; bracketing
+rules come next.
+
 Known gaps: freshmen/recruiting classes are invisible to the prior; one prior SD
 for every team (extreme projections may be overconfident).
 
@@ -159,6 +180,10 @@ src/cbb/
   models/current.py  build the season model as of any date (pipeline, sim, backtests)
   sim/formats.py     conference tournament formats (validated)
   sim/season.py      season + conference tournament Monte Carlo
+  sim/resume.py      résumé score + quadrant records per simulation
+  sim/bracket.py     α blend, selection, 76-team seed lines, projected bracket
+  outputs.py         top 40, bracket, all-teams tables
+  report.py          renders outputs/index.html
   evaluate.py        walk-forward evaluation, shared by every model
 config/conf_tournaments_2027.yaml   tournament formats (edit me)
 scripts/run_pipeline.py     daily: download, clean, prior, Bayesian ratings, simulation

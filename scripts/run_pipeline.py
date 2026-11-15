@@ -1,5 +1,5 @@
 """End-to-end daily run: download -> clean -> preseason prior -> Bayesian ratings
--> season + conference tournament simulation.
+-> season + conference tournament simulation -> résumé, selection, bracket.
 
 Usage:  python scripts/run_pipeline.py [--skip-download] [--sims 5000]
 """
@@ -17,6 +17,8 @@ from cbb.models.prior import build_features, season_final_ratings
 from cbb.models.ridge import rank_table
 from cbb.sim.formats import load_formats
 from cbb.sim.season import simulate
+from cbb.outputs import build_outputs, write_outputs
+from cbb.report import write_report
 
 
 def main():
@@ -53,8 +55,16 @@ def main():
     sim = simulate(model, teams, played, rem, load_formats(CURRENT_SEASON), today, n_sims=a.sims)
     sim.summary.to_csv(PROCESSED_DIR / f"sim_summary_{CURRENT_SEASON}.csv", index=False)
     np.savez_compressed(PROCESSED_DIR / f"sim_{CURRENT_SEASON}.npz", **sim.arrays)
-    cols = ["team", "conf", "wins", "losses", "p_conf_1seed", "p_auto", "p_field_pred"]
-    print(sim.summary[cols].head(20).round(2).to_string(index=False))
+
+    print("Résumé, selection and seeding...")
+    o = build_outputs(sim, model, played, rem, today)
+    write_outputs(o)
+    print(f"  wrote {write_report()}")
+    f = o["field"]
+    print(f[["overall", "seed", "region", "team", "conf", "bid", "p_field"]].head(16).round(2)
+          .to_string(index=False))
+    print("Last in: ", ", ".join(o["last_in"]["team"]))
+    print("First out:", ", ".join(o["first_out"]["team"]))
 
 
 if __name__ == "__main__":
