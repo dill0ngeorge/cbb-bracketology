@@ -108,6 +108,25 @@ The Bayesian model matches the tuned ridge on point accuracy with no tuning,
 and adds calibrated uncertainty: predicted vs. actual win rates agree within
 ~1 point in every decile. That uncertainty is what the bracket simulation needs.
 
+### Tested and rejected: down-weighting lopsided games
+
+Results in big mismatches are noisier (residual SD 12.4 vs. 11.2 points once the
+expected margin passes 20), so I tried inflating the observation variance for games the
+model expects to be lopsided (`mismatch_c` in `kalman.py`, `scripts/backtest_mismatch.py`).
+
+| Variance inflation strength | Margin RMSE | Log loss | RMSE, close games only |
+|---|---|---|---|
+| 0 (current) | **11.278** | **0.5381** | 11.205 |
+| 0.002 | 11.282 | 0.5382 | 11.200 |
+| 0.005 | 11.288 | 0.5385 | 11.204 |
+| 0.010 | 11.295 | 0.5387 | 11.211 |
+
+It makes predictions slightly worse. The model already updates on surprise rather than
+on wins (an expected 30-point win moves a rating very little), and big favorites actually
+beat expectations slightly (expected +29.4, actual +31.3 in 25+ point mismatches), so the
+ratings under-react to talent gaps a little rather than over-react. The option stays in the
+code, switched off.
+
 ## Season simulator
 
 Monte Carlo over the rest of the season (5,000 runs in ~10 s). Each run draws

@@ -27,7 +27,12 @@ from cbb.config import HOME_COURT_PER100
 # Tempo terms are set by hand; tempo only scales margins.
 DEFAULT_HYPER = dict(sigma=12.65, tau=0.68, k=0.81, mu_sd=3.0, mu_tau=0.1,
                      sigma_t=5.0, tau_t=0.3, tempo_sd=2.5, tempo_regress=0.75,
-                     margin_noise=9.7)
+                     margin_noise=9.7,
+                     # Mismatch weighting: games the model expects to be lopsided are
+                     # noisier (garbage time, resting starters), so their observation
+                     # variance is inflated:  sigma^2 * (1 + c * clip(gap - start, 0, cap - start)^2)
+                     # where gap = |expected margin in points| before the game.
+                     mismatch_c=0.0, mismatch_start=12.0, mismatch_cap=30.0)
 
 
 @dataclass
@@ -69,9 +74,23 @@ class KalmanRatings:
                 self.Pt[np.diag_indices_from(self.Pt)] += qt
         self.last_date = date
 
+    def _mismatch_mult(self, ti, ui, loc):
+        """Observation-variance multiplier from the pre-game expected margin."""
+        h = self.hyper
+        if h.get("mismatch_c", 0) <= 0:
+            return np.ones(len(ti))
+        K = len(self.teams)
+        o, d = self.m[:K], self.m[K:2 * K]
+        diff100 = (o[ti] + d[ui]) - (o[ui] + d[ti]) + 2 * self.hca * loc
+        poss = self.mt[-1] + self.mt[:K][ti] + self.mt[:K][ui]
+        gap = np.abs(diff100 * poss / 100)
+        excess = np.clip(gap - h["mismatch_start"], 0, h["mismatch_cap"] - h["mismatch_start"])
+        return 1 + h["mismatch_c"] * excess ** 2
+
     @staticmethod
     def _update(m, P, H, y, r2):
-        S = H @ P @ H.T + r2 * np.eye(len(y))
+        r2 = np.broadcast_to(np.asarray(r2, dtype=float), (len(y),))
+        S = H @ P @ H.T + np.diag(r2)
         PHt = P @ H.T
         Kg = np.linalg.solve(S, PHt.T).T
         m = m + Kg @ (y - H @ m)
@@ -93,7 +112,8 @@ class KalmanRatings:
         H[np.arange(n), K + ui] = 1
         H[:, -1] = 1
         y = d["off_eff"].values - self.hca * d["loc"].values
-        self.m, self.P = self._update(self.m, self.P, H, y, self.hyper["sigma"] ** 2)
+        self.m, self.P = self._update(self.m, self.P, H, y, self.hyper["sigma"] ** 2 *
+                                      self._mismatch_mult(ti, ui, d["loc"].values))
 
         g = d[d["loc"] >= 0].drop_duplicates("game_id")
         gi, go = g["team_id"].map(self.idx).values, g["opp_id"].map(self.idx).values
