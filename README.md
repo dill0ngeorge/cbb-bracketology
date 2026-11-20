@@ -127,6 +127,29 @@ beat expectations slightly (expected +29.4, actual +31.3 in 25+ point mismatches
 ratings under-react to talent gaps a little rather than over-react. The option stays in the
 code, switched off.
 
+### Prior strength, program strength and recruiting (Nov 2026)
+
+Comparing against KenPom and Bart Torvik showed the preseason prior was the main source
+of disagreement. Three tests:
+
+1. **Prior strength** (`scripts/backtest_hyper.py k ...`): a slightly looser prior
+   (k = 1.0 vs. 0.81) is better in both 2018–21 and 2022–26; k = 1.25 or more is worse.
+   Adopted.
+2. **Program strength**: a team's mean rating over the previous four seasons, plus its
+   interaction with production lost (elite programs reload). Preseason RMSE 6.20 → 6.17
+   (leave-season-out), also better trained on past seasons only. Adopted.
+3. **Team recruiting class rankings** (On3 industry rankings, 5 classes collected in
+   `config/recruiting/`): only a small gain (top-50-class teams 6.80 → 6.71); a five-star
+   freshman is worth about +1.6 points. Not adopted yet; the next step is player-level
+   recruit rankings rather than team class scores.
+
+Walk-forward with both changes: portal-era RMSE 11.279 → 11.256 (November 12.05 → 11.97),
+pre-portal 11.276 → 11.269. Against KenPom's top 48 on Nov 19, rating correlation rose
+from 0.88 to 0.91.
+
+Remaining blind spot: rosters built on freshmen (e.g. 2026 Duke projected +19 preseason,
+finished +40; 2027 Arkansas, 62% of minutes from players new to D1).
+
 ## Season simulator
 
 Monte Carlo over the rest of the season (5,000 runs in ~10 s). Each run draws

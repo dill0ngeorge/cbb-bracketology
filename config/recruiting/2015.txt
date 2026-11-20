@@ -1,0 +1,50 @@
+1|Duke|3|1|1|98.813
+2|Kentucky|3|4|0|98.340
+3|LSU|2|1|0|97.530
+4|Arizona|2|2|0|97.469
+5|Kansas|1|2|0|96.637
+6|Texas A&M|0|4|0|96.271
+7|Texas|0|3|0|95.316
+8|Ohio State|0|5|0|95.220
+9|Louisville|0|3|1|94.762
+10|Syracuse|0|3|0|94.329
+11|Washington|0|4|3|94.053
+12|Florida State|1|2|1|93.676
+13|Connecticut|0|2|0|93.593
+14|California|2|0|1|93.197
+15|Marquette|1|2|2|93.026
+16|Michigan State|0|2|1|92.445
+17|Auburn|0|3|2|91.873
+18|Georgetown|0|2|1|91.620
+19|Villanova|1|1|1|91.535
+20|Mississippi State|1|1|2|91.476
+21|Illinois|0|3|2|91.447
+22|UNLV|1|1|1|91.380
+23|Wake Forest|0|2|1|91.214
+24|Indiana|0|2|1|91.123
+25|Oregon|0|3|0|90.847
+26|Oregon State|0|2|3|90.797
+27|Florida|0|3|0|90.483
+28|San Diego State|0|2|0|90.102
+29|Stanford|0|1|2|90.043
+30|Purdue|1|0|2|89.883
+31|Virginia Tech|0|3|0|89.721
+32|Maryland|1|0|1|89.677
+33|Memphis|0|2|3|89.608
+34|St. John's|0|2|2|89.505
+35|SMU|0|1|2|89.341
+36|Virginia|0|1|1|89.243
+37|Minnesota|0|1|4|89.129
+38|Vanderbilt|0|1|3|88.916
+39|UCLA|0|2|1|88.861
+40|Oklahoma State|0|1|1|88.597
+41|Cincinnati|0|1|2|88.472
+42|Rutgers|0|2|2|88.078
+43|NC State|0|1|1|87.989
+44|Baylor|0|1|2|87.948
+45|North Carolina|0|1|1|87.860
+46|Nebraska|0|2|1|87.831
+47|South Carolina|0|2|1|87.808
+48|Penn State|0|2|1|87.389
+49|Notre Dame|0|2|1|87.369
+50|Wisconsin|0|2|2|87.152

@@ -20,12 +20,14 @@ from scipy.stats import norm
 
 from cbb.config import HOME_COURT_PER100
 
-# sigma, tau, k: posterior means from PyMC fits of 2023, 2025, 2026, averaged
-#   (2023: 12.58/0.68/0.76, 2025: 12.58/0.73/0.79, 2026: 12.79/0.62/0.88).
+# sigma, tau: posterior means from PyMC fits of 2023, 2025, 2026, averaged
+#   (2023: 12.58/0.68, 2025: 12.58/0.73, 2026: 12.79/0.62).
+# k (prior scale): PyMC gave 0.76-0.88; the walk-forward backtest prefers 1.0 in both
+#   2018-21 and 2022-26 (scripts/backtest_hyper.py k ...), so the prior is a bit looser.
 # margin_noise: game-level margin noise in points, tuned for calibration on the
 #   2018-2026 walk-forward (log loss minimized near 9.7).
 # Tempo terms are set by hand; tempo only scales margins.
-DEFAULT_HYPER = dict(sigma=12.65, tau=0.68, k=0.81, mu_sd=3.0, mu_tau=0.1,
+DEFAULT_HYPER = dict(sigma=12.65, tau=0.68, k=1.0, mu_sd=3.0, mu_tau=0.1,
                      sigma_t=5.0, tau_t=0.3, tempo_sd=2.5, tempo_regress=0.75,
                      margin_noise=9.7,
                      # Mismatch weighting: games the model expects to be lopsided are

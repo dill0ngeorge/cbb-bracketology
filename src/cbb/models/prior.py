@@ -15,6 +15,8 @@ Features for team T in season s (all from season s-1 unless noted):
   new_d1                       1 if T was not D1 last season
   prev_x_ret, tr_x_src, tr_x_gmsc   interactions (returning production matters
                                more for teams far from average, etc.)
+  prog4                        program strength: mean rating over the previous 4 seasons
+  prog_x_lost                  prog4 x share of production lost (strong programs reload)
 
 Rosters for season s are players who have appeared for T in s. For past seasons
 that is the full roster; for the current season it fills in over the first
@@ -36,8 +38,8 @@ from cbb.config import PROCESSED_DIR, SEASONS
 from cbb.models.ridge import fit_ridge
 
 ROSTER_FEATURES = ["ret_min", "ret_gmsc", "tr_in_share", "tr_in_gmsc40", "tr_in_src_em",
-                   "prev_x_ret", "tr_x_src", "tr_x_gmsc"]
-BASE_FEATURES = ["prev_o", "prev_d", "prev_em", "prev2_em", "conf_prev_em", "new_d1"]
+                   "prev_x_ret", "tr_x_src", "tr_x_gmsc", "prog_x_lost"]
+BASE_FEATURES = ["prev_o", "prev_d", "prev_em", "prev2_em", "conf_prev_em", "new_d1", "prog4"]
 FULL_FEATURES = BASE_FEATURES + ROSTER_FEATURES
 TARGETS = ["o_rel", "d_rel"]
 
@@ -81,6 +83,8 @@ def build_features(final: pd.DataFrame, ps: pd.DataFrame, teams: pd.DataFrame,
         t["prev_d"] = t["prev_d"].fillna(7.5)
         t["prev2_em"] = t["prev2_em"].fillna(t["prev_em"])
         t["conf_prev_em"] = t.groupby("conf_id")["prev_em"].transform("mean")
+        hist = final[(final["season"] >= s - 4) & (final["season"] < s)]
+        t["prog4"] = t["team_id"].map(hist.groupby("team_id")["em"].mean()).fillna(t["prev_em"])
 
         last = ps[ps["season"] == s - 1]
         cur = ps[ps["season"] == s]
@@ -114,6 +118,7 @@ def build_features(final: pd.DataFrame, ps: pd.DataFrame, teams: pd.DataFrame,
         t.loc[has_roster, "ret_min"] = t.loc[has_roster, "ret_min"].fillna(0)
         t.loc[has_roster, "ret_gmsc"] = t.loc[has_roster, "ret_gmsc"].fillna(0)
         t["tr_in_share"] = t["tr_in_share"].clip(upper=5)
+        t["prog_x_lost"] = t["prog4"] * (1 - t["ret_gmsc"].clip(0, 1))
         t["prev_x_ret"] = t["prev_em"] * t["ret_gmsc"]
         t["tr_x_src"] = t["tr_in_share"] * t["tr_in_src_em"]
         t["tr_x_gmsc"] = t["tr_in_share"] * t["tr_in_gmsc40"]
