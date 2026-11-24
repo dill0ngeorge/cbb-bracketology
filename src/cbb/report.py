@@ -70,6 +70,7 @@ tr:last-child td{border-bottom:0}
 .bar{display:inline-block;height:6px;border-radius:3px;background:var(--accent);vertical-align:middle;margin-left:6px;opacity:.85}
 .notes{font-size:13.5px;color:var(--muted);max-width:80ch;display:grid;gap:6px}
 .notes p{margin:0}
+.notes a{color:var(--accent)}
 """
 
 
@@ -173,6 +174,7 @@ def render(out_dir=OUT_DIR) -> str:
   <p>Team ratings come from a dynamic Bayesian model of points per possession, starting from a preseason projection built on returning production and transfers, and updated after every game.</p>
   <p>Each simulation plays out the remaining schedule and every conference tournament in its 2027 format. Conference champions take the automatic bids. The other 44 spots go to the best seeding scores, an even blend of projected team strength and a résumé score (wins above a bubble team against the same schedule, quadrant-weighted by location, plus capped margin).</p>
   <p>The displayed bracket gives each conference's auto bid to its most likely champion and orders the field by average seeding score. Early in the season these projections lean heavily on the preseason prior.</p>
+  <p>Updated every morning. Data: <a href="bracket.csv">bracket.csv</a>, <a href="top40.csv">top40.csv</a>, <a href="all_teams.csv">all_teams.csv</a>. Code and methodology: <a href="https://github.com/dill0ngeorge/cbb-bracketology">github.com/dill0ngeorge/cbb-bracketology</a>.</p>
 </section>
 </main></body></html>"""
 

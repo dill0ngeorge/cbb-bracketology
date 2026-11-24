@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: daily-projections
@@ -56,3 +58,20 @@ jobs:
             git commit -m "Daily projections: $(jq -r .as_of outputs/meta.json), $(jq -r .games_played outputs/meta.json) games"
             git push
           fi
+
+  # Publish outputs/ (index.html + CSVs) to GitHub Pages.
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main        # pick up the commit the update job just pushed
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: outputs
+      - id: deployment
+        uses: actions/deploy-pages@v4
