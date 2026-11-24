@@ -26,6 +26,7 @@ team strength**, not a prediction of the committee.
 - [x] Résumé score (quadrants on own ratings, wins above bubble, capped margin)
 - [x] Field selection, α blend, 76-team S-curve + Opening Round, projected bracket
 - [ ] Bracketing rules (conference separation, geography)
+- [x] Daily GitHub Action updating outputs/
 - [ ] Public site
 
 ## Data
@@ -198,6 +199,13 @@ rules come next.
 
 Known gaps: freshmen/recruiting classes are invisible to the prior; one prior SD
 for every team (extreme projections may be overconfident).
+
+## Daily updates
+
+`.github/workflows/daily-update.yml` runs every morning at 7:17 AM Eastern (and on demand
+from the Actions tab): it downloads the latest games, refits the ratings, simulates the
+season, and commits `outputs/` back to the repo. Past seasons' raw files are cached
+between runs.
 
 ## Usage
 

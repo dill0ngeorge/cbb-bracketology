@@ -1,0 +1,58 @@
+name: Daily projections
+
+# Every morning during the season: download the latest games, refit the
+# ratings, simulate the rest of the season, and commit outputs/ (bracket,
+# top 40, all teams, index.html) back to the repo.
+on:
+  schedule:
+    - cron: "17 12 * * *"   # 12:17 UTC = 7:17 AM Eastern (6:17 AM during EDT)
+  workflow_dispatch:         # "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-projections
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      # Past seasons never change, so keep them between runs; the current
+      # season is always re-downloaded by the pipeline.
+      - name: Restore raw data cache
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: raw-data-v1-${{ github.run_id }}
+          restore-keys: raw-data-v1-
+
+      - name: Tests
+        run: pytest -q
+
+      - name: Run pipeline
+        run: python scripts/run_pipeline.py --sims 5000
+
+      - name: Commit updated projections
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Daily projections: $(jq -r .as_of outputs/meta.json), $(jq -r .games_played outputs/meta.json) games"
+            git push
+          fi
