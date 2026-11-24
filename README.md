@@ -3,6 +3,8 @@
 A projected-Selection-Sunday NCAA tournament bracket built on **my own model of
 team strength**, not a prediction of the committee.
 
+**Live site: [dill0ngeorge.github.io/cbb-bracketology](https://dill0ngeorge.github.io/cbb-bracketology/)**, updated every morning.
+
 ## How it works (planned)
 
 1. **Team ratings**: a dynamic hierarchical Bayesian model of offensive/defensive
@@ -27,7 +29,7 @@ team strength**, not a prediction of the committee.
 - [x] Field selection, α blend, 76-team S-curve + Opening Round, projected bracket
 - [ ] Bracketing rules (conference separation, geography)
 - [x] Daily GitHub Action updating outputs/
-- [ ] Public site
+- [x] Public site (GitHub Pages, deployed by the daily workflow)
 
 ## Data
 
